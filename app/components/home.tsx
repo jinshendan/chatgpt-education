@@ -130,16 +130,19 @@ export function Chat() {
     );
 
   useEffect(() => {
-    latestMessageRef.current?.scrollIntoView(false);
+    latestMessageRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
   });
 
   return (
-    <div className={styles.chat}>
+    <div className={styles.chat} key={session.topic}>
       <div className={styles["chat-header"]}>
         <div>
           <div className={styles["chat-header-title"]}>{session.topic}</div>
           <div className={styles["chat-header-sub-title"]}>
-            与 ChatGPT-Education 的 {session.messages.length} 条对话
+            与 ChatGPT 的 {session.messages.length} 条对话
           </div>
         </div>
         <div className={styles["chat-actions"]}>
@@ -224,9 +227,9 @@ export function Home() {
     <div className={styles.container}>
       <div className={styles.sidebar}>
         <div className={styles["sidebar-header"]}>
-          <div className={styles["sidebar-title"]}>ChatGPT Education</div>
+          <div className={styles["sidebar-title"]}>ChatGPT Next</div>
           <div className={styles["sidebar-sub-title"]}>
-            智能教育系统.
+            Build your own AI assistant.
           </div>
           <div className={styles["sidebar-logo"]}>
             <ChatGptIcon />
@@ -243,7 +246,7 @@ export function Home() {
               <IconButton icon={<SettingsIcon />} />
             </div>
             <div className={styles["sidebar-action"]}>
-              <a href="https://github.com/jinshendan" target="_blank">
+              <a href="https://github.com/Yidadaa" target="_blank">
                 <IconButton icon={<GithubIcon />} />
               </a>
             </div>
@@ -251,7 +254,7 @@ export function Home() {
           <div>
             <IconButton
               icon={<AddIcon />}
-              text={"创建新的聊天"}
+              text={"新的聊天"}
               onClick={createNewSession}
             />
           </div>

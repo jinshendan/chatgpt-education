@@ -20,7 +20,13 @@ export async function POST(req: Request) {
       },
       isProd
         ? {}
-        : {}
+        : {
+            proxy: {
+              protocol: "socks",
+              host: "127.0.0.1",
+              port: 7890,
+            },
+          }
     );
 
     return new Response(JSON.stringify(completion.data));
