@@ -1,5 +1,8 @@
 "use client";
 
+import { useState, useRef, useLayoutEffect, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+
 import { IconButton } from "./button";
 import styles from "./home.module.css";
 
@@ -10,12 +13,23 @@ import SendWhiteIcon from "../icons/send-white.svg";
 import BrainIcon from "../icons/brain.svg";
 import ExportIcon from "../icons/export.svg";
 import BotIcon from "../icons/bot.svg";
-import UserIcon from "../icons/user.svg";
 import AddIcon from "../icons/add.svg";
+import DeleteIcon from "../icons/delete.svg";
+import LoadingIcon from "../icons/three-dots.svg";
 
-/*这是一个聊天项组件，表示一条聊天记录。它接收一个包含了聊天信息的 props 对象，然后将这些信息渲染到屏幕上 */
+import { Message, useChatStore } from "../store";
+
+export function Avatar(props: { role: Message["role"] }) {
+  if (props.role === "assistant") {
+    return <BotIcon className={styles["user-avtar"]} />;
+  }
+
+  return <div className={styles["user-avtar"]}>🤣</div>;
+}
+
 export function ChatItem(props: {
   onClick?: () => void;
+  onDelete?: () => void;
   title: string;
   count: number;
   time: string;
@@ -26,60 +40,106 @@ export function ChatItem(props: {
       className={`${styles["chat-item"]} ${
         props.selected && styles["chat-item-selected"]
       }`}
+      onClick={props.onClick}
     >
       <div className={styles["chat-item-title"]}>{props.title}</div>
       <div className={styles["chat-item-info"]}>
-        <div className={styles["chat-item-count"]}>已有 {props.count} 条对话</div>
+        <div className={styles["chat-item-count"]}>{props.count} 条对话</div>
         <div className={styles["chat-item-date"]}>{props.time}</div>
+      </div>
+      <div className={styles["chat-item-delete"]} onClick={props.onDelete}>
+        <DeleteIcon />
       </div>
     </div>
   );
 }
 
-/*ChatList：这个组件用于渲染一个聊天列表。它生成了一些模拟数据，然后为每个数据项渲染一个 ChatItem 组件。 */
 export function ChatList() {
-  const listData = new Array(3).fill({
-    title: "这是一个List中的标题",
-    count: 5,
-    time: new Date().toLocaleString(),
-  });
-
-  const selectedIndex = 0;
+  const [sessions, selectedIndex, selectSession, removeSession] = useChatStore(
+    (state) => [
+      state.sessions,
+      state.currentSessionIndex,
+      state.selectSession,
+      state.removeSession,
+    ]
+  );
 
   return (
     <div className={styles["chat-list"]}>
-      {listData.map((item, i) => (
-        <ChatItem {...item} key={i} selected={i === selectedIndex} />
+      {sessions.map((item, i) => (
+        <ChatItem
+          title={item.topic}
+          time={item.lastUpdate}
+          count={item.messages.length}
+          key={i}
+          selected={i === selectedIndex}
+          onClick={() => selectSession(i)}
+          onDelete={() => removeSession(i)}
+        />
       ))}
     </div>
   );
 }
 
-/*Chat：这个组件表示一个聊天窗口，它显示了一个聊天的详细信息。它包括了一个聊天头部（包含聊天标题和一些动作按钮），一个聊天主体（显示所有的聊天消息），以及一个输入面板（用于输入新的消息）。 */
 export function Chat() {
-  const messages = [
-    {
-      role: "user",
-      content: "这是一条用户发送的消息",
-      date: new Date().toLocaleString(),
-    },
-    {
-      role: "bot",
-      content: "这是一条chatgpt的回复".repeat(10),
-      date: new Date().toLocaleString(),
-    },
-  ];
+  type RenderMessage = Message & { preview?: boolean };
 
-  const title = "这是一个聊天框标题";
-  const count = 5;
+  const session = useChatStore((state) => state.currentSession());
+  const [userInput, setUserInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const onUserInput = useChatStore((state) => state.onUserInput);
+  const onUserSubmit = () => {
+    if (userInput.length <= 0) return;
+    setIsLoading(true);
+    onUserInput(userInput).then(() => setIsLoading(false));
+    setUserInput("");
+  };
+  const onInputKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Enter" && (e.shiftKey || e.ctrlKey || e.metaKey)) {
+      onUserSubmit();
+      e.preventDefault();
+    }
+  };
+  const latestMessageRef = useRef<HTMLDivElement>(null);
+
+  const messages = (session.messages as RenderMessage[])
+    .concat(
+      isLoading
+        ? [
+            {
+              role: "assistant",
+              content: "……",
+              date: new Date().toLocaleString(),
+              preview: true,
+            },
+          ]
+        : []
+    )
+    .concat(
+      userInput.length > 0
+        ? [
+            {
+              role: "user",
+              content: userInput,
+              date: new Date().toLocaleString(),
+              preview: true,
+            },
+          ]
+        : []
+    );
+
+  useEffect(() => {
+    latestMessageRef.current?.scrollIntoView(false);
+  });
 
   return (
     <div className={styles.chat}>
       <div className={styles["chat-header"]}>
         <div>
-          <div className={styles["chat-header-title"]}>{title}</div>
+          <div className={styles["chat-header-title"]}>{session.topic}</div>
           <div className={styles["chat-header-sub-title"]}>
-            当前聊天框有 {count} 条对话
+            与 ChatGPT-Education 的 {session.messages.length} 条对话
           </div>
         </div>
         <div className={styles["chat-actions"]}>
@@ -104,16 +164,25 @@ export function Chat() {
               }
             >
               <div className={styles["chat-message-container"]}>
-                <div className={styles["chat-message-avtar"]}>
-                  {message.role === "user" ? <UserIcon /> : <BotIcon />}
+                <div className={styles["chat-message-avatar"]}>
+                  <Avatar role={message.role} />
                 </div>
+                {message.preview && (
+                  <div className={styles["chat-message-status"]}>用户正在输入…</div>
+                )}
                 <div className={styles["chat-message-item"]}>
-                  {message.content}
+                  {message.preview && !isUser ? (
+                    <LoadingIcon />
+                  ) : (
+                    <div className="markdown-body">
+                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                    </div>
+                  )}
                 </div>
-                {!isUser && (
+                {!isUser && !message.preview && (
                   <div className={styles["chat-message-actions"]}>
                     <div className={styles["chat-message-action-date"]}>
-                      {message.date}
+                      {message.date.toLocaleString()}
                     </div>
                   </div>
                 )}
@@ -121,19 +190,26 @@ export function Chat() {
             </div>
           );
         })}
+        <span ref={latestMessageRef} style={{ opacity: 0 }}>
+          -
+        </span>
       </div>
 
       <div className={styles["chat-input-panel"]}>
         <div className={styles["chat-input-panel-inner"]}>
           <textarea
             className={styles["chat-input"]}
-            placeholder="输入消息"
+            placeholder="输入消息，Ctrl + Enter 发送"
             rows={3}
+            onInput={(e) => setUserInput(e.currentTarget.value)}
+            value={userInput}
+            onKeyDown={(e) => onInputKeyDown(e as any)}
           />
           <IconButton
             icon={<SendWhiteIcon />}
             text={"发送"}
             className={styles["chat-input-send"]}
+            onClick={onUserSubmit}
           />
         </div>
       </div>
@@ -141,15 +217,16 @@ export function Chat() {
   );
 }
 
-/*Home 组件将以上的所有组件组合起来，创建了一个完整的聊天应用界面。这个界面包括了一个侧边栏（包含应用的标题，logo，和聊天列表）和一个聊天窗口。*/
 export function Home() {
+  const [createNewSession] = useChatStore((state) => [state.newSession]);
+
   return (
     <div className={styles.container}>
       <div className={styles.sidebar}>
         <div className={styles["sidebar-header"]}>
           <div className={styles["sidebar-title"]}>ChatGPT Education</div>
           <div className={styles["sidebar-sub-title"]}>
-            Smart Education with ChatGPT.
+            智能教育系统.
           </div>
           <div className={styles["sidebar-logo"]}>
             <ChatGptIcon />
@@ -166,11 +243,17 @@ export function Home() {
               <IconButton icon={<SettingsIcon />} />
             </div>
             <div className={styles["sidebar-action"]}>
-              <IconButton icon={<GithubIcon />} />
+              <a href="https://github.com/jinshendan" target="_blank">
+                <IconButton icon={<GithubIcon />} />
+              </a>
             </div>
           </div>
           <div>
-            <IconButton icon={<AddIcon />} text={"新的聊天"} />
+            <IconButton
+              icon={<AddIcon />}
+              text={"创建新的聊天"}
+              onClick={createNewSession}
+            />
           </div>
         </div>
       </div>

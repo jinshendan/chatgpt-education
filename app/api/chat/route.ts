@@ -4,6 +4,8 @@ import { OpenAIApi, Configuration } from "openai";
 // 从 './config' 文件中导入 apiKey
 import { apiKey } from "./config";
 
+import { ChatRequest } from "./typing";
+
 // 创建一个新的 Configuration 实例，并使用 apiKey 进行配置
 const config = new Configuration({
   apiKey,
@@ -12,22 +14,17 @@ const config = new Configuration({
 // 使用前面配置的 config 创建一个新的 OpenAIApi 客户端
 const openai = new OpenAIApi(config);
 
-// 定义一个异步函数 GET，它接收一个请求，并返回一个响应
-export async function GET(req: Request) {
+// 定义一个异步函数 POST，它接收一个请求，并返回一个响应
+export async function POST(req: Request) {
   try {
+    const requestBody = (await req.json()) as ChatRequest;
     // 使用 openai.createChatCompletion 方法创建一个 chat completion
     // 这个方法接受两个参数：
     // 第一个参数是包含了一系列消息和使用的模型信息的对象
     // 第二个参数是一个包含代理设置的对象
     const completion = await openai.createChatCompletion(
       {
-        messages: [
-          {
-            role: "user",
-            content: "hello",
-          },
-        ],
-        model: "gpt-3.5-turbo",
+        ...requestBody
       },
       {
         proxy: {},

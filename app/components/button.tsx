@@ -11,7 +11,7 @@ export function IconButton(props: {
   icon: JSX.Element;                /*这是一个必需的属性，它是一个 JSX 元素，表示按钮的图标 */
   text?: string;                    /*这是一个可选的属性，表示按钮上的文字。*/
   bordered?: boolean;               /*这是一个可选的属性，如果它为 true，那么按钮将有边框。*/
-  className?: string;
+  className?: string;               /*这是一个可选的属性，用于自定义按钮的类名。*/
 }) {
   return (
     <div
@@ -19,6 +19,7 @@ export function IconButton(props: {
         styles["icon-button"] +
         ` ${props.bordered && styles.border} ${props.className ?? ""}`
       }
+      onClick={props.onClick}
     >
       <div className={styles["icon-button-icon"]}>{props.icon}</div>
       {props.text && (
