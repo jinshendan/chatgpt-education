@@ -168,7 +168,7 @@ export function Chat() {
                   <Avatar role={message.role} />
                 </div>
                 {message.preview && (
-                  <div className={styles["chat-message-status"]}>用户正在输入…</div>
+                  <div className={styles["chat-message-status"]}>正在输入…</div>
                 )}
                 <div className={styles["chat-message-item"]}>
                   {message.preview && !isUser ? (
