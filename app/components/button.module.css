@@ -1,0 +1,36 @@
+/*主按钮的样式*/
+.icon-button {
+    background-color: var(--white);  /*设置按钮的背景颜色为白色。这里的 --white 是一个 CSS 变量，其具体的颜色值在其他地方定义*/
+    border-radius: 10px;             /*设置按钮的边框半径为 10px，使得按钮的角变得圆滑。*/
+    display: flex;                   /*使用 Flexbox 布局，使得按钮内部的元素（如图标和文本）居中显示。*/
+    align-items: center;
+    justify-content: center;
+    padding: 10px;                   /*设置按钮内部的填充空间为 10px。*/
+  
+    box-shadow: var(--card-shadow);  /*设置按钮的阴影效果。--card-shadow 是一个 CSS 变量，其具体的阴影效果在其他地方定义。*/
+    cursor: pointer;                 /*设置鼠标悬停在按钮上时的光标形状为手指形状。*/
+    transition: all .3s ease;        /*设置按钮所有属性的过渡效果，过渡时间为 0.3 秒，过渡曲线为 ease*/
+    overflow: hidden;                /*设置当按钮的内容超出其区域时，隐藏超出的部分。*/ 
+    user-select: none;               /*禁止用户选中按钮的内容。*/
+  }
+  
+  .border {                          /*这个类给按钮添加了边框*/ 
+    border: var(--border-in-light);  /*设置按钮的边框颜色*/
+  }
+  
+  .icon-button:hover {                              /*这是一个伪类，定义了鼠标悬停在按钮上时的样式。*/
+    filter: brightness(0.9) hue-rotate(0.01turn);   /*修改了按钮的亮度和色相*/
+  }
+  
+  .icon-button-icon {                               /*这个类定义了按钮内部图标的样式。*/
+    width: 16px;
+    height: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .icon-button-text {                               /*这个类定义了按钮内部文本的样式*/
+    margin-left: 5px;
+    font-size: 12px;
+  }
